@@ -179,7 +179,6 @@ async function updateDdns(ip) {
     } catch (e) {
       console.error(e);
     }
-    console.log(`Next update in ${watchInterval} seconds`);
     setTimeout(run, watchInterval * 1000);
   }
 
