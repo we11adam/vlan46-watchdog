@@ -1,0 +1,21 @@
+{
+  "watchInterval": 300,
+  "peers": {
+    "abc": "tr069.abc.xyz",
+    "def": "tr069.def.com",
+    "xyz": "tr069.xyz.me"
+  },
+  "cf": {
+    "cfZoneId": "<your cloudflare zone id>",
+    "cfDomainId": "<your cloudflare domain dd>",
+    "cfDomainName": "<your domain name>",
+    "cfDomainTtl": 300,
+    "cfAuthEmail": "<<your cloudflare auth email>",
+    "cfAuthKey": "<your cloudflare auth key>"
+  },
+  "ros": {
+    "rosHost": "<your routeros ip address>",
+    "rosUser": "<your routeros username>",
+    "rosPass": "<your routeros password>"
+  }
+}
