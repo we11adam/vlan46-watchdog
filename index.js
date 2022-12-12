@@ -1,5 +1,6 @@
+const fs = require('fs').promises;
 const config = require('./config.json');
-const {peers, cf, ros, watchInterval} = config
+const {cf, ros} = config;
 const {cfZoneId, cfDomainId, cfDomainName, cfDomainTtl, cfAuthEmail, cfAuthKey} = cf;
 const {rosHost, rosUser, rosPass} = ros;
 
@@ -81,7 +82,9 @@ async function updateDdns(ip) {
 
 (async () => {
   const update = async () => {
-    let dhcpClient
+    let content = await fs.readFile('./config.json', 'utf8');
+    const {peers} = JSON.parse(content);
+    let dhcpClient;
     try {
       dhcpClient = (await queryRouterOS({url: '/ip/dhcp-client'}))[0];
     } catch (e) {
@@ -168,16 +171,18 @@ async function updateDdns(ip) {
     lastAddr = addr;
   }
 
-  try {
-    await update();
-  } catch (e) {
-    console.log(e);
-  }
-  setInterval(async () => {
+  const run = async () => {
+    let content = await fs.readFile('./config.json', 'utf8');
+    const {watchInterval} = JSON.parse(content);
     try {
       await update();
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
-  }, 1000 * watchInterval);
+    console.log(`Next update in ${watchInterval} seconds`);
+    setTimeout(run, watchInterval * 1000);
+  }
+
+  await run();
+
 })();
