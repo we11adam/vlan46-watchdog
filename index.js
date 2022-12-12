@@ -1,17 +1,16 @@
 const fs = require('fs').promises;
+const dns = require('dns').promises;
+const https = require('https');
+const fetch = require('node-fetch');
 const config = require('./config.json');
 const {cf, ros} = config;
 const {cfZoneId, cfDomainId, cfDomainName, cfDomainTtl, cfAuthEmail, cfAuthKey} = cf;
 const {rosHost, rosUser, rosPass} = ros;
-
-const fetch = require('node-fetch');
-const dns = require('dns').promises;
-const https = require('https');
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false,
 });
 
-const lastCache = {};
+const cache = {};
 let lastGateway = null;
 let lastAddr = null;
 
@@ -114,8 +113,8 @@ async function updateDdns(ip) {
       const peerHost = peers[name];
       let peerAddr = (await dns.lookup(peerHost))['address']; // get peer ip
 
-      if (!lastCache[name]) {
-        lastCache[name] = {
+      if (!cache[name]) {
+        cache[name] = {
           routeId: null,
           'dst-address': peerAddr
         }
@@ -126,8 +125,8 @@ async function updateDdns(ip) {
         if (route['comment'] === name) {
           hasPeerRoute = true;
           const routeId = route['.id']
-          lastCache[name]['routeId'] = routeId;
-          lastCache[name]['dst-address'] = peerAddr;
+          cache[name]['routeId'] = routeId;
+          cache[name]['dst-address'] = peerAddr;
           route['dst-address'] = route['dst-address'].replace(/\/\d\d/, '');
           if (route['gateway'] !== gateway || route['dst-address'] !== peerAddr) {
             await patchPeerRoute({routeId, peerAddr, gateway})
@@ -139,18 +138,18 @@ async function updateDdns(ip) {
       if (!hasPeerRoute) {
         const resp = await addPeerRoute({peerAddr, gateway, comment: name});
         console.log(resp);
-        lastCache[name] = {
+        cache[name] = {
           'dst-address': peerAddr,
           routeId: resp['.id']
         }
-        console.log(`No route for ${name}, added: ${JSON.stringify(lastCache[name])}`);
+        console.log(`No route for ${name}, added: ${JSON.stringify(cache[name])}`);
       }
     }
 
     // update routes
     if (lastGateway !== gateway) {
-      for (const name in lastCache) {
-        const {routeId} = lastCache[name];
+      for (const name in cache) {
+        const {routeId} = cache[name];
         const data = await patchPeerRoute({routeId, gateway});
         console.log(`Update route ${name}: ${JSON.stringify(data)}`);
       }
