@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const dns = require('dns').promises;
+const net = require('net');
 const https = require('https');
 const fetch = require('node-fetch');
 const config = require('./config.json');
@@ -111,7 +112,7 @@ async function updateDdns(ip) {
     // build up routes and cache
     for (const name in peers) {
       const peerHost = peers[name];
-      let peerAddr = (await dns.lookup(peerHost))['address']; // get peer ip
+      let peerAddr = net.isIP(peerHost) ? peerHost : ((await dns.lookup(peerHost))['address']); // get peer ip
 
       if (!cache[name]) {
         cache[name] = {
