@@ -43,6 +43,7 @@ async function addPeerRoute({peerAddr, gateway, comment}) {
 }
 
 async function queryRouterOS({url, method = 'GET', body}) {
+  // ROS REST API 不支持 HTTP，一定要走 HTTPS
   url = `https://${rosHost}/rest${url}`;
   const options = {
     method,

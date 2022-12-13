@@ -7,10 +7,10 @@
   },
   "cf": {
     "cfZoneId": "<your cloudflare zone id>",
-    "cfDomainId": "<your cloudflare domain dd>",
+    "cfDomainId": "<your cloudflare domain id>",
     "cfDomainName": "<your domain name>",
     "cfDomainTtl": 300,
-    "cfAuthEmail": "<<your cloudflare auth email>",
+    "cfAuthEmail": "<your cloudflare auth email>",
     "cfAuthKey": "<your cloudflare auth key>"
   },
   "ros": {
