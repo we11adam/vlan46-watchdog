@@ -7,7 +7,7 @@ const config = require('./config.json');
 const {cf, ros} = config;
 const {cfZoneId, cfDomainId, cfDomainName, cfDomainTtl, cfAuthEmail, cfAuthKey} = cf;
 const {rosHost, rosUser, rosPass} = ros;
-const httpsAgent = new https.Agent({
+const agent = new https.Agent({
   rejectUnauthorized: false,
 });
 
@@ -46,12 +46,11 @@ async function queryRouterOS({url, method = 'GET', body}) {
   // ROS REST API 不支持 HTTP，一定要走 HTTPS
   url = `https://${rosHost}/rest${url}`;
   const options = {
-    method,
+    method, agent,
     headers: {
       Authorization: 'Basic ' + Buffer.from(`${rosUser}:${rosPass}`).toString('base64'),
       'Content-Type': 'application/json'
-    },
-    agent: httpsAgent
+    }
   }
 
   if (body) {
@@ -64,11 +63,11 @@ async function queryRouterOS({url, method = 'GET', body}) {
 
 async function updateDdns(ip) {
   const body = {
-    "content": ip,
-    "name": cfDomainName,
-    "proxied": false,
-    "ttl": cfDomainTtl,
-    "type": "A"
+    content: ip,
+    name: cfDomainName,
+    proxied: false,
+    ttl: cfDomainTtl,
+    type: 'A'
   }
   return fetch(`https://api.cloudflare.com/client/v4/zones/${cfZoneId}/dns_records/${cfDomainId}`, {
     method: 'PUT',
@@ -106,7 +105,8 @@ async function updateDdns(ip) {
       console.error(`Failed to get address`);
       return;
     }
-    console.log(`currentGateway: ${gateway}, currentIp: ${addr}`);
+
+    console.log(`Current gateway: ${gateway}, current address: ${addr}`);
 
     const routes = await queryRouterOS({url: '/ip/route'});
 
@@ -131,7 +131,7 @@ async function updateDdns(ip) {
           cache[name]['dst-address'] = peerAddr;
           route['dst-address'] = route['dst-address'].replace(/\/\d\d/, '');
           if (route['gateway'] !== gateway || route['dst-address'] !== peerAddr) {
-            await patchPeerRoute({routeId, peerAddr, gateway})
+            await patchPeerRoute({routeId, peerAddr, gateway});
           }
           break;
         }
@@ -158,7 +158,7 @@ async function updateDdns(ip) {
     }
 
     if (addr !== lastAddr) {
-      console.log(`IP changed, lastAddress: ${lastAddr}, currentAddress: ${addr}`);
+      console.log(`IP changed, last address: ${lastAddr}, current address: ${addr}`);
       const resp = await updateDdns(addr);
       if (resp.ok) {
         console.log(`IP updated successfully: ${addr}`);
@@ -180,6 +180,7 @@ async function updateDdns(ip) {
     } catch (e) {
       console.error(e);
     }
+    console.log(`Next update in ${watchInterval} seconds`);
     setTimeout(run, watchInterval * 1000);
   }
 
