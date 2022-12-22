@@ -9,3 +9,6 @@
 ## Really, what?
 
 佛曰不可说，不可说……
+
+## License
+WTFPL.
